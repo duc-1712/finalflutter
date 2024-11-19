@@ -33,11 +33,15 @@ void main() {
     // Nhập tên sự kiện
     await tester.enterText(find.byType(TextField).first, 'Sự kiện mới');
 
-    // Nhấn nút Lưu sự kiện
-    await tester.tap(find.widgetWithText(FilledButton, 'Lưu sự kiện'));
+    // Pump để đảm bảo giao diện sẵn sàng
     await tester.pumpAndSettle();
 
-    // Kiểm tra xem Navigator đã pop hay chưa (tức là trở về màn hình trước)
+    // Nhấn nút Lưu sự kiện
+    await tester.tap(find.text('Lưu'));
+
+    await tester.pumpAndSettle();
+
+    // Kiểm tra xem Navigator đã pop hay chưa
     expect(find.byType(EventDetailView), findsNothing);
   });
 }

@@ -66,16 +66,43 @@ class _EventDetailViewState extends State<EventDetailView> {
   }
 
   Future<void> _saveEvent() async {
-    widget.event.subject = subjectController.text;
-    widget.event.notes = notesController.text;
+    if (subjectController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng nhập tên sự kiện!'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    widget.event.subject = subjectController.text.trim();
+    widget.event.notes = notesController.text.trim();
     await eventService.saveEvent(widget.event);
+
     if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Sự kiện đã được lưu thành công!'),
+        backgroundColor: Colors.green,
+      ),
+    );
+
     Navigator.of(context).pop();
   }
 
   Future<void> _deleteEvent() async {
     await eventService.deleteEvent(widget.event);
     if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Sự kiện đã được xóa thành công!'),
+        backgroundColor: Colors.redAccent,
+      ),
+    );
+
     Navigator.of(context).pop();
   }
 
@@ -115,6 +142,7 @@ class _EventDetailViewState extends State<EventDetailView> {
                           labelText: 'Tên sự kiện',
                           prefixIcon: Icon(Icons.event),
                           border: OutlineInputBorder(),
+                          errorText: null,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -179,11 +207,18 @@ class _EventDetailViewState extends State<EventDetailView> {
                       onPressed: _deleteEvent,
                       label: const Text('Xóa'),
                       icon: const Icon(Icons.delete, color: Colors.red),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.redAccent.withOpacity(0.2),
+                      ),
                     ),
                   FilledButton.icon(
                     onPressed: _saveEvent,
                     label: const Text('Lưu'),
                     icon: const Icon(Icons.save, color: Colors.green),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 4, 53, 68)
+                          .withOpacity(0.2),
+                    ),
                   ),
                 ],
               ),

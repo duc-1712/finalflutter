@@ -1,4 +1,4 @@
-name: event_manager_test
+name: final_flutter_project_test
 
 on:
   push:
@@ -19,8 +19,8 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
-          flutter-version: '3.24.4'
+          channel: "stable"
+          flutter-version: "3.24.4"
           cache: true
 
       - name: Install dependencies
