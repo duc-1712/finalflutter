@@ -1,14 +1,27 @@
 import 'package:event_manager/event/event_data_source.dart';
 import 'package:intl/intl.dart';
-import 'event_detail_view.dart';
+import 'package:event_manager/event/event_detail_view.dart';
 import 'package:event_manager/event/event_model.dart';
-import 'event_service.dart';
+import 'package:event_manager/event/event_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
+import './event_notes.dart';
+import 'package:event_manager/settings/settings_view.dart';
 
 class EventView extends StatefulWidget {
-  const EventView({super.key});
+  final Function(Locale) onLocaleChanged;
+  final Function(ThemeMode) onThemeModeChanged;
+  final Locale currentLocale;
+  final ThemeMode currentThemeMode;
+
+  const EventView({
+    super.key,
+    required this.onLocaleChanged,
+    required this.onThemeModeChanged,
+    required this.currentLocale,
+    required this.currentThemeMode,
+  });
 
   @override
   State<EventView> createState() => _EventViewState();
@@ -53,6 +66,37 @@ class _EventViewState extends State<EventView> {
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: 'Danh sách sự kiện',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EventNotes(),
+                ),
+              ).then((_) {
+                loadEvents();
+              });
+            },
+            icon: const Icon(Icons.list_alt),
+          ),
+          IconButton(
+            tooltip: 'Cài đặt',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SettingsView(
+                    onLocaleChanged: widget.onLocaleChanged,
+                    onThemeModeChanged: widget.onThemeModeChanged,
+                    currentLocale: widget.currentLocale,
+                    currentThemeMode: widget.currentThemeMode,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.settings),
+          ),
           PopupMenuButton<CalendarView>(
             onSelected: (value) {
               setState(() {

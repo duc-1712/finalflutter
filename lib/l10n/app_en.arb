@@ -3,5 +3,10 @@
   "addEvent": "Add Event",
   "eventDetails": "Event details",
   "today": "Today",
-  "refresh": "Refresh"
+  "refresh": "Refresh",
+  "settings": "Settings",
+  "language": "Language",
+  "darkMode": "Dark Mode",
+  "vietnamese": "Vietnamese",
+  "english": "English"
 }

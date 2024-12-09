@@ -3,5 +3,10 @@
   "addEvent": "Thêm sự kiện",
   "eventDetails": "Chi tiết sự kiện",
   "today": "Hôm nay",
-  "refresh": "Làm mới"
+  "refresh": "Làm mới",
+  "settings": "Cài đặt",
+  "language": "Ngôn ngữ",
+  "darkMode": "Chế độ tối",
+  "vietnamese": "Tiếng Việt",
+  "english": "Tiếng Anh"
 }
