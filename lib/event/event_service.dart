@@ -1,23 +1,39 @@
 import 'package:event_manager/event/event_model.dart';
+import 'package:flutter/foundation.dart';
 import 'package:localstore/localstore.dart';
 
 class EventService {
+  static final _instance = EventService._internal();
+  factory EventService() => _instance;
+
+  EventService._internal();
+
   final db = Localstore.getInstance(useSupportDir: true);
 
   final path = 'events';
 // Hàm lấy danh sách dữ liệu từ localstore
   Future<List<EventModel>> getAllEvents() async {
-    final eventsMap = await db.collection(path).get();
-    if (eventsMap != null) {
-      return eventsMap.entries.map((entry) {
-        final eventData = entry.value as Map<String, dynamic>;
-        if (!eventData.containsKey('id')) {
-          eventData['id'] = entry.key.split('/').last;
-        }
-        return EventModel.fromMap(eventData);
-      }).toList();
+    try {
+      if (kDebugMode) {
+        print("=== BẮT ĐẦU LOAD EVENTS ===");
+      } // Thêm log để debug
+      final eventsMap = await db.collection(path).get();
+      if (eventsMap != null) {
+        return eventsMap.entries.map((entry) {
+          final eventData = entry.value as Map<String, dynamic>;
+          if (!eventData.containsKey('id')) {
+            eventData['id'] = entry.key.split('/').last;
+          }
+          return EventModel.fromMap(eventData);
+        }).toList();
+      }
+      return [];
+    } catch (e) {
+      if (kDebugMode) {
+        print("LỖI LOAD EVENTS: $e");
+      } // Log lỗi nếu có
+      return [];
     }
-    return [];
   }
 
   // hàm lưu một sự kiện vào localstore
