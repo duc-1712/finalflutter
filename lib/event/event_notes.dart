@@ -1,7 +1,6 @@
+import 'package:event_manager/event/event_model.dart';
+import 'package:event_manager/event/event_service.dart';
 import 'package:flutter/material.dart';
-import 'package:localstore/localstore.dart';
-import './event_model.dart';
-import './event_detail_view.dart';
 
 class EventNotes extends StatefulWidget {
   const EventNotes({super.key});
@@ -11,9 +10,10 @@ class EventNotes extends StatefulWidget {
 }
 
 class _EventNotesState extends State<EventNotes> {
-  final db = Localstore.getInstance();
+  final _eventService = EventService();
   List<EventModel> events = [];
   bool isLoading = true;
+  String searchQuery = '';
 
   @override
   void initState() {
@@ -26,26 +26,22 @@ class _EventNotesState extends State<EventNotes> {
       isLoading = true;
     });
 
-    final eventsMap = await db.collection('events').get();
-    if (eventsMap != null) {
-      final loadedEvents = eventsMap.entries.map((entry) {
-        final eventData = entry.value as Map<String, dynamic>;
-        if (!eventData.containsKey('id')) {
-          eventData['id'] = entry.key.split('/').last;
-        }
-        return EventModel.fromMap(eventData);
-      }).toList();
+    final loadedEvents = await _eventService.getAllEvents();
 
+    if (mounted) {
       setState(() {
         events = loadedEvents;
         isLoading = false;
       });
-    } else {
-      setState(() {
-        events = [];
-        isLoading = false;
-      });
     }
+  }
+
+  List<EventModel> get filteredEvents {
+    if (searchQuery.isEmpty) return events;
+    return events
+        .where((event) =>
+            event.subject.toLowerCase().contains(searchQuery.toLowerCase()))
+        .toList();
   }
 
   @override
@@ -60,55 +56,77 @@ class _EventNotesState extends State<EventNotes> {
           ),
         ],
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : events.isEmpty
-              ? const Center(child: Text('Chưa có sự kiện nào'))
-              : ListView.builder(
-                  itemCount: events.length,
-                  itemBuilder: (context, index) {
-                    final event = events[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 8.0, vertical: 4.0),
-                      child: ListTile(
-                        leading: Icon(
-                          event.isAllDay
-                              ? Icons.event_available
-                              : Icons.event_note,
-                          color: event.isAllDay ? Colors.orange : Colors.blue,
-                        ),
-                        title: Text(
-                          event.subject,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Bắt đầu: ${event.formatedStartTimeString}'),
-                            Text('Kết thúc: ${event.formatedEndTimeString}'),
-                            if (event.notes?.isNotEmpty ?? false)
-                              Text('Ghi chú: ${event.notes}'),
-                          ],
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  EventDetailView(event: event),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: 'Tìm kiếm sự kiện...',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value;
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : filteredEvents.isEmpty
+                    ? const Center(child: Text('Không có sự kiện nào'))
+                    : ListView.builder(
+                        itemCount: filteredEvents.length,
+                        itemBuilder: (context, index) {
+                          final event = filteredEvents[index];
+                          return ListTile(
+                            title: Text(event.subject),
+                            subtitle: Text(event.formatedStartTimeString),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Xác nhận xóa'),
+                                    content: const Text(
+                                        'Bạn có chắc muốn xóa sự kiện này?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
+                                        child: const Text('Hủy'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, true),
+                                        child: const Text('Xóa'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+
+                                if (confirm == true) {
+                                  await _eventService.deleteEvent(event);
+                                  await loadEvents();
+                                }
+                              },
                             ),
-                          ).then((value) {
-                            if (value == true) {
-                              loadEvents();
-                            }
-                          });
+                          );
                         },
-                        isThreeLine: true,
                       ),
-                    );
-                  },
-                ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Xử lý thêm sự kiện mới
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }
