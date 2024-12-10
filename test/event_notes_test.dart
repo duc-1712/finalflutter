@@ -8,12 +8,13 @@ void main() {
     late EventNotesModel eventNotes;
 
     setUp(() {
+      final fixedTime = DateTime(2024, 1, 1, 12, 0);
       eventNotes = EventNotesModel(
         id: '1',
         eventId: 'event123',
         content: 'Test note content',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+        createdAt: fixedTime,
+        updatedAt: fixedTime,
       );
     });
 
@@ -54,6 +55,8 @@ void main() {
     });
 
     test('should copy EventNotesModel with new values', () {
+      Future.delayed(const Duration(milliseconds: 100));
+
       final copiedNotes = eventNotes.copyWith(
         content: 'Updated content',
       );
@@ -62,7 +65,7 @@ void main() {
       expect(copiedNotes.eventId, equals(eventNotes.eventId));
       expect(copiedNotes.content, equals('Updated content'));
       expect(copiedNotes.createdAt, equals(eventNotes.createdAt));
-      expect(copiedNotes.updatedAt, isNot(equals(eventNotes.updatedAt)));
+      expect(copiedNotes.updatedAt.isAfter(eventNotes.updatedAt), isTrue);
     });
   });
 }
