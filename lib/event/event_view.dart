@@ -1,4 +1,5 @@
 import 'package:event_manager/event/event_data_source.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:event_manager/event/event_detail_view.dart';
 import 'package:event_manager/event/event_model.dart';
@@ -31,6 +32,7 @@ class _EventViewState extends State<EventView> {
   final eventService = EventService();
   List<EventModel> items = [];
   final calendarController = CalendarController();
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -40,10 +42,19 @@ class _EventViewState extends State<EventView> {
   }
 
   Future<void> loadEvents() async {
-    final events = await eventService.getAllEvents();
-    setState(() {
-      items = events;
-    });
+    try {
+      setState(() => _isLoading = true);
+      final events = await eventService.getAllEvents();
+      setState(() {
+        items = events;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print("LỖI LOAD EVENTS: $e");
+      }
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -128,55 +139,59 @@ class _EventViewState extends State<EventView> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Card(
-          elevation: 4,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: SfCalendar(
-            controller: calendarController,
-            dataSource: EventDataSource(items),
-            backgroundColor: Colors.grey[100], // Thêm màu nền
-            headerStyle: const CalendarHeaderStyle(
-              backgroundColor: Color.fromARGB(255, 51, 101, 144),
-              textStyle: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-            monthViewSettings: const MonthViewSettings(
-              appointmentDisplayMode: MonthAppointmentDisplayMode.indicator,
-              showAgenda: true, // Hiển thị danh sách sự kiện bên dưới lịch
-            ),
-            onLongPress: (details) {
-              if (details.targetElement == CalendarElement.calendarCell) {
-                final newEvent = EventModel(
-                  startTime: details.date!,
-                  endTime: details.date!.add(const Duration(hours: 1)),
-                  subject: '',
-                );
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) {
-                    return EventDetailView(event: newEvent);
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                child: SfCalendar(
+                  controller: calendarController,
+                  dataSource: EventDataSource(items),
+                  backgroundColor: Colors.grey[100], // Thêm màu nền
+                  headerStyle: const CalendarHeaderStyle(
+                    backgroundColor: Color.fromARGB(255, 51, 101, 144),
+                    textStyle: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                  monthViewSettings: const MonthViewSettings(
+                    appointmentDisplayMode:
+                        MonthAppointmentDisplayMode.indicator,
+                    showAgenda:
+                        true, // Hiển thị danh sách sự kiện bên dưới lịch
+                  ),
+                  onLongPress: (details) {
+                    if (details.targetElement == CalendarElement.calendarCell) {
+                      final newEvent = EventModel(
+                        startTime: details.date!,
+                        endTime: details.date!.add(const Duration(hours: 1)),
+                        subject: '',
+                      );
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) {
+                          return EventDetailView(event: newEvent);
+                        },
+                      )).then((value) async {
+                        if (value == true) {
+                          await loadEvents();
+                        }
+                      });
+                    }
                   },
-                )).then((value) async {
-                  if (value == true) {
-                    await loadEvents();
-                  }
-                });
-              }
-            },
-            onTap: (details) {
-              if (details.targetElement == CalendarElement.appointment) {
-                final event = details.appointments!.first;
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) {
-                    return EventDetailView(event: event);
+                  onTap: (details) {
+                    if (details.targetElement == CalendarElement.appointment) {
+                      final event = details.appointments!.first;
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) {
+                          return EventDetailView(event: event);
+                        },
+                      ));
+                    }
                   },
-                ));
-              }
-            },
-          ),
-        ),
-      ),
+                ),
+              ),
+            ),
       floatingActionButton: FloatingActionButton(
         tooltip: al.addEvent,
         onPressed: () {
